@@ -1,0 +1,10 @@
+jenkins:
+  image: jenkins:latest
+  environment:
+    DOCKER_URL: ''
+  volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "./data/jenkins:/var/jenkins_home"
+      - "./dockerfiles/jenkins/.ssh:/var/jenkins_home/.ssh"
+  ports:
+      - "9527:80"

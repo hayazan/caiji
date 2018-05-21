@@ -1,0 +1,88 @@
+nginx:
+    image: nginx:1.13.3
+    ports:
+      - "8080:80"
+    links:
+      - "php-fpm:php-fpm"
+    volumes:
+      - ./app:/var/www/html
+      - ./dockerfiles/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./logs/nginx:/var/log/nginx
+      - /etc/localtime:/etc/localtime:ro
+    restart: always
+    command: nginx -g 'daemon off;'
+mysql-db:
+    image: mysql:5.7
+    volumes:
+      - ./data/mysql:/var/lib/mysql:rw
+      - ./logs/mysql:/var/lib/mysql-logs:rw
+      - ./dockerfiles/mysql/conf.d:/etc/mysql/conf.d:ro
+      - /etc/localtime:/etc/localtime:ro
+    restart: always
+    environment:
+        MYSQL_ROOT_PASSWORD: zhaojun
+        MYSQL_DATABASE: package_v1
+        MYSQL_USER: zhaojun
+        MYSQL_PASSWORD: zhaojun
+
+redis-db:
+    build: ./dockerfiles/redis
+    restart: always
+    volumes:
+      - ./data/redis:/data
+      - /etc/localtime:/etc/localtime:ro
+
+php-fpm:
+    build: ./dockerfiles/php/
+    restart: always
+    environment:
+        TP_APP_DEBUG: 0
+        APP_DEBUG: 1
+        APP_DOCKER_DEV: 0
+        MYSQL_HOST: mysql-db
+        MYSQL_DATABASE: zushouyou_v1
+        MYSQL_USER: root
+        MYSQL_PASSWORD: zhaojun
+        MYSQL_PORT: 3306
+    volumes:
+      - ./app:/var/www/html:rw
+      - ./dockerfiles/php/php.ini:/usr/local/etc/php/php.ini:ro
+      - ./dockerfiles/php/php-fpm.conf:/usr/local/etc/php-fpm.conf:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ./logs/php-fpm:/var/log/php-fpm:rw
+    depends_on:
+      - mysql-db
+      - redis-db
+    links:
+      - mysql-db:mysql-db
+      - redis-db:redis-db
+    command: php-fpm
+
+takser:
+    image: node:6.9
+    environment:
+        MYSQL_HOST: mysql-db
+        SERVER_HOST: server
+    volumes:
+      - ./app/node-task:/task
+      - /etc/localtime:/etc/localtime:ro
+    links:
+      - mysql-db:mysql-db
+      - redis-db:redis-db
+      - nginx:server
+    working_dir: /task
+    command: /bin/bash -c "npm install && node ./index.js"
+
+composer:
+    image: composer:1.4.2
+    volumes:
+      - ./app:/app:rw
+    working_dir: /app/webroot
+    command: composer install
+
+bower:
+    image: digitallyseamless/nodejs-bower-grunt
+    volumes:
+      - ./app:/app:rw
+    working_dir: /app/webroot
+    command: bower install
