@@ -1,6 +1,7 @@
 <?php
 //这是
 //
+//
 function GrabImage($url, $dir = '', $filename = '',$x=1)
 {
     if (empty($url)) {
