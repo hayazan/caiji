@@ -1,5 +1,6 @@
 <?php
-// 引用相关的类库
+//这是
+//
 function GrabImage($url, $dir = '', $filename = '',$x=1)
 {
     if (empty($url)) {
